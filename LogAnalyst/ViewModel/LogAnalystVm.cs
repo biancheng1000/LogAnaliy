@@ -343,13 +343,16 @@ namespace LogAnalyst.ViewModel
         }
 
         /// <summary>
-        /// 忽略指定的函数
+        /// 忽略指定的函数,或是包指定关键字的函数名称
         /// </summary>
         /// <param name="logobj"></param>
         /// <returns></returns>
         private bool IgnorFunction(object logobj)
         {
-            return FilterFunction(logobj, (o) => { return !IgnorFunctionList.Contains(o.LogSrcName); });
+            return FilterFunction(logobj, (o) =>
+			{
+				return !(IgnorFunctionList.Split(',').Where(n => o.LogSrcName.Contains(n)).Count() > 0);
+			});
         }
 
         #endregion
