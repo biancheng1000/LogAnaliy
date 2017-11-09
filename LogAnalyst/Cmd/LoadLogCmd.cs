@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
 using LogAnalyst.Model;
+using System.Windows;
+
 namespace LogAnalyst.Cmd
 {
     /// <summary>
@@ -35,15 +37,64 @@ namespace LogAnalyst.Cmd
 
             if (File.Exists(vm.LogFileName))
             {
+
+                PreviewProcess();
+    
                 LoadResult();
             }
         }
+
+
+        /// <summary>
+        /// 对大的log日志进行预先处理，分割
+        /// </summary>
+        private bool PreviewProcess()
+        {
+            FileInfo f = new FileInfo(vm.LogFileName);
+            string newfileName = vm.LogFileName;
+            if (f.Length > 100 * 1024 * 1024)
+            {
+                if (MessageBox.Show("文件超过了100M，是否进行分割？", "提问", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    //按照10M大小进行文件分割
+                    FileStream fs = new FileStream(vm.LogFileName, FileMode.Open);
+                    byte[] temp = new byte[100 * 1024 * 1024];
+                    int index = 1;
+                    while (fs.Position < fs.Length)
+                    {
+                        if (fs.Length - fs.Position < temp.Length)
+                        {
+                            temp = new byte[fs.Length - fs.Position];
+                        }
+                        else
+                        {
+                            fs.Read(temp, 0, temp.Length);
+                        }
+
+                        //fs.Position += temp.Length;
+
+                        newfileName = vm.LogFileName.Replace(".txt", "_"+index + ".txt");
+                        using (FileStream sfs = new FileStream(newfileName, FileMode.CreateNew))
+                        {
+                            sfs.Write(temp, 0, temp.Length);
+                            sfs.Flush();
+                            sfs.Close();
+                        }
+                        index++;
+                    }
+                    vm.LogFileName = newfileName;
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
         public async void LoadResult()
         {
             vm.Status = "正在加载中";
             int logCount = await LoadAsync();
-            //System.Windows.Forms.MessageBox.Show("一共加载了"+logCount+"条日志");
+            
             vm.Status = "一共加载了:"+logCount+"条日志";
             if (logCount > 0)
             {
@@ -72,9 +123,20 @@ namespace LogAnalyst.Cmd
                                 log.LogLevel = (LogTextLevel)Enum.Parse(typeof(LogTextLevel), matchResult.Groups[2].Value);
                                 log.LogSrcName = matchResult.Groups[3].Value;
                                 log.LogDesc = matchResult.Groups[4].Value;
-
-                                temps.Add(log);
-                                icount++;
+                                if (vm.FilterDate.HasValue)
+                                {
+                                    if (DateTime.Parse(log.LogTime) >= new DateTime(2017, 11, 7))
+                                    {
+                                        temps.Add(log);
+                                        icount++;
+                                    }
+                                }
+                                else
+                                {
+                                    temps.Add(log);
+                                    icount++;
+                                }
+                               
                             }
                             else
                             {

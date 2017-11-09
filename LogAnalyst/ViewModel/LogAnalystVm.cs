@@ -7,9 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -23,6 +25,9 @@ namespace LogAnalyst.ViewModel
 
         #region 普通属性
 
+        DateTime? filterDate;
+
+        public DateTime? FilterDate { get => filterDate; set => filterDate = value; }
 
         string ignorKey;
         /// <summary>
@@ -671,6 +676,8 @@ namespace LogAnalyst.ViewModel
         public DateTime EndTime { get => endTime; set =>SetProperty<DateTime>(ref endTime , value); }
 
         #endregion
+
+       
 
     }
 }
